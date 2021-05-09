@@ -40,6 +40,7 @@ def getPaymentData(accounts):
             print(int)
     return data
 
+
 def getOctuneData(octuneAddresses):
     data = []
     for address in octuneAddresses:
@@ -54,34 +55,37 @@ def getOctuneData(octuneAddresses):
             continue
 
         for d in devices_cuda['devices']:
+            workerfound=False
             for w in workers_cuda['workers']:
                 if d['uuid'] == w['device_uuid']:
+                    workerfound = True
                     continue
+            if workerfound:
+                data.append(
+                    "oc_devices,endpoint={endpoint},uuid={deviceid},oc_core={oc_core},oc_memory={oc_memory},oc_power_w={oc_power_w},oc_power_tdp={oc_power_tdp}"
+                    " kt_avg={kt_avg},kt_min={kt_min},kt_max={kt_max},vram_temperature={vram_temp},gpu_temperature={gpu_temp},temp_warning={temp_warning},hashrate={hashrate}"
+                    ",power={power},core={core},memory={memory}".format(
+                        endpoint=endpoint,
+                        deviceid=d['uuid'],
+                        oc_core=d['oc_data']['core_clock_delta'],
+                        oc_memory=d['oc_data']['memory_clock_delta'],
+                        oc_power_w=d['oc_data']['power_limit_watts'],
+                        oc_power_tdp=d['oc_data']['power_limit_tdp'],
+                        vram_temp=d['__gddr6x_temp'],
+                        gpu_temp=d['gpu_temp'],
+                        temp_warning=d['too_hot'],
+                        hashrate=w['algorithms'][0]['speed'],
+                        kt_avg=d['kernel_times']['avg'],
+                        kt_min=d['kernel_times']['min'],
+                        kt_max=d['kernel_times']['max'],
+                        power=d['gpu_power_usage'],
+                        memory=d['gpu_clock_memory'],
+                        core=d['gpu_clock_core']
 
-            data.append(
-                "oc_devices,endpoint={endpoint},uuid={deviceid},oc_core={oc_core},oc_memory={oc_memory},oc_power_w={oc_power_w},oc_power_tdp={oc_power_tdp}"
-                " kt_avg={kt_avg},kt_min={kt_min},kt_max={kt_max},vram_temperature={vram_temp},gpu_temperature={gpu_temp},temp_warning={temp_warning},hashrate={hashrate}"
-                ",power={power},core={core},memory={memory}".format(
-                    endpoint=endpoint,
-                    deviceid=d['uuid'],
-                    oc_core=d['oc_data']['core_clock_delta'],
-                    oc_memory=d['oc_data']['memory_clock_delta'],
-                    oc_power_w=d['oc_data']['power_limit_watts'],
-                    oc_power_tdp=d['oc_data']['power_limit_tdp'],
-                    vram_temp=d['__gddr6x_temp'],
-                    gpu_temp=d['gpu_temp'],
-                    temp_warning=d['too_hot'],
-                    hashrate=w['algorithms'][0]['speed'],
-                    kt_avg=d['kernel_times']['avg'],
-                    kt_min=d['kernel_times']['min'],
-                    kt_max=d['kernel_times']['max'],
-                    power=d['gpu_power_usage'],
-                    memory=d['gpu_clock_memory'],
-                    core=d['gpu_clock_core']
-
-                ))
+                    ))
 
         return data
+
 
 def getRigData(accounts):
     data = []
@@ -145,22 +149,28 @@ def getRigData(accounts):
     return data
 
 
-
-
 def stats():
     client = InfluxDBClient(host=secrets.influxhost)
     client.switch_database(secrets.influxdb)
     loop = PAYMENTS
     while True:
         data = []
+        tmpData = getRigData(accounts=secrets.accounts)
+        if tmpData is not None:
+            data = data + tmpData
 
-        data = data + getRigData(accounts=secrets.accounts)
         if loop == PAYMENTS:
-            data = data + getPaymentData(accounts=secrets.accounts)
+            tmpData = getPaymentData(accounts=secrets.accounts)
+            if tmpData is not None:
+               data = data + tmpData
             loop = 0
 
         loop = loop + 1
-        data = data + getOctuneData(octuneAddresses=secrets.octuneAddresses)
+
+        tmpData = getOctuneData(octuneAddresses=secrets.octuneAddresses)
+        if tmpData is not None:
+            data = data + tmpData
+
         print(data)
         try:
             client.write_points(data, time_precision='ms',  protocol='line')
