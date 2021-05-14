@@ -71,7 +71,7 @@ def getOctuneData(octuneAddresses):
                         oc_memory=d['oc_data']['memory_clock_delta'],
                         oc_power_w=d['oc_data']['power_limit_watts'],
                         oc_power_tdp=d['oc_data']['power_limit_tdp'],
-                        vram_temp=d['__gddr6x_temp'],
+                        vram_temp=d['__vram_temp'],
                         gpu_temp=d['gpu_temp'],
                         temp_warning=d['too_hot'],
                         hashrate=w['algorithms'][0]['speed'],
