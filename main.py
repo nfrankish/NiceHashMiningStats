@@ -84,7 +84,7 @@ def getOctuneData(octuneAddresses):
 
                     ))
 
-        return data
+    return data
 
 
 def getRigData(accounts):
