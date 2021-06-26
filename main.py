@@ -107,34 +107,35 @@ def getRigData(accounts):
             rigLocalProfit = round(Decimal(r['localProfitability']), 8)
             print('Rig {} ({}) - Profit : {} - LocalProfit : {} '.format(rigId, rigName, rigProfit, rigLocalProfit))
             rigTotalSpeed = float(0.0);
-            for d in r['devices']:
-                name = d['name']
-                deviceId = d['id']
-                vram = d['temperature'] / 65536
-                gpu = d['temperature'] % 65536
-                deviceType = d['deviceType']['enumName']
-                speed = 0.0
-                speeds = d['speeds']
-                if len(speeds) == 1:
-                    speed = Decimal(speeds[0]['speed'])
-                    if speeds[0]['displaySuffix'] == 'MH':
-                        speed = speed * 1000000
-                    elif speeds[0]['displaySuffix'] == 'KH':
-                        speed = speed * 1000
-                rigTotalSpeed += float(speed)
-                print('\tCard {} : VRAM {} : GPU {} : Speed: {} '.format(name, vram, gpu, speed))
+            if 'devices' in r.keys():
+                for d in r['devices']:
+                    name = d['name']
+                    deviceId = d['id']
+                    vram = d['temperature'] / 65536
+                    gpu = d['temperature'] % 65536
+                    deviceType = d['deviceType']['enumName']
+                    speed = 0.0
+                    speeds = d['speeds']
+                    if len(speeds) == 1:
+                        speed = Decimal(speeds[0]['speed'])
+                        if speeds[0]['displaySuffix'] == 'MH':
+                            speed = speed * 1000000
+                        elif speeds[0]['displaySuffix'] == 'KH':
+                            speed = speed * 1000
+                    rigTotalSpeed += float(speed)
+                    print('\tCard {} : VRAM {} : GPU {} : Speed: {} '.format(name, vram, gpu, speed))
 
-                data.append(
-                    "devices,name='{name}',rigid={rigId},deviceid={deviceId},orgid={orgId},devicetype={deviceType} gpu_temperature={gpu},vram_temperature={vram},speed={speed}".format(
-                        name=name.replace(' ', '\ '),
-                        rigId=rigId,
-                        deviceId=deviceId,
-                        orgId=orgId,
-                        gpu=gpu,
-                        vram=vram,
-                        speed=float(speed),
-                        deviceType=deviceType
-                    ))
+                    data.append(
+                        "devices,name='{name}',rigid={rigId},deviceid={deviceId},orgid={orgId},devicetype={deviceType} gpu_temperature={gpu},vram_temperature={vram},speed={speed}".format(
+                            name=name.replace(' ', '\ '),
+                            rigId=rigId,
+                            deviceId=deviceId,
+                            orgId=orgId,
+                            gpu=gpu,
+                            vram=vram,
+                            speed=float(speed),
+                            deviceType=deviceType
+                        ))
 
             data.append(
                 "rigs,id={rigId},name={rigName},orgid={orgId} profit={rigProfit},localprofit={rigLocalProfit},totalspeed={rigTotalSpeed}".format(
